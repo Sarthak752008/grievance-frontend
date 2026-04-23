@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = "https://grievance-backend.onrender.com"; // Updated to Render backend URL
+const BASE_URL = "https://grievance-backend-e6gr.onrender.com"; // Live Render Backend URL
 
 const Dashboard = () => {
   const [grievances, setGrievances] = useState([]);
@@ -24,7 +24,7 @@ const Dashboard = () => {
 
   const fetchGrievances = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/grievances`, axiosConfig);
+      const res = await axios.get(`${BASE_URL}/api/grievances`, axiosConfig);
       setGrievances(res.data);
     } catch (err) {
       console.error("Failed to fetch", err);
@@ -35,10 +35,10 @@ const Dashboard = () => {
     e.preventDefault();
     try {
       if (editingId) {
-        await axios.put(`${API_URL}/api/grievances/${editingId}`, formData, axiosConfig);
+        await axios.put(`${BASE_URL}/api/grievances/${editingId}`, formData, axiosConfig);
         setEditingId(null);
       } else {
-        await axios.post(`${API_URL}/api/grievances`, formData, axiosConfig);
+        await axios.post(`${BASE_URL}/api/grievances`, formData, axiosConfig);
       }
       setFormData({ title: "", description: "", category: "Academic" });
       fetchGrievances();
@@ -51,7 +51,7 @@ const Dashboard = () => {
     const title = e.target.value;
     setSearchTerm(title);
     if (title.length > 2) {
-      const res = await axios.get(`${API_URL}/api/grievances/search?title=${title}`, axiosConfig);
+      const res = await axios.get(`${BASE_URL}/api/grievances/search?title=${title}`, axiosConfig);
       setGrievances(res.data);
     } else if (title.length === 0) {
       fetchGrievances();
@@ -60,7 +60,7 @@ const Dashboard = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete this grievance?")) {
-      await axios.delete(`${API_URL}/api/grievances/${id}`, axiosConfig);
+      await axios.delete(`${BASE_URL}/api/grievances/${id}`, axiosConfig);
       fetchGrievances();
     }
   };

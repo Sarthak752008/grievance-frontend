@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 
-const API_URL = "https://grievance-backend.onrender.com"; // Updated to Render backend URL
+const BASE_URL = "https://grievance-backend-e6gr.onrender.com"; // Live Render Backend URL
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -12,7 +12,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${API_URL}/api/login`, formData);
+      const res = await axios.post(`${BASE_URL}/api/login`, formData);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.student));
       navigate("/dashboard");

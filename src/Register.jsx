@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 
-const API_URL = "https://grievance-backend.onrender.com"; // Updated to Render backend URL
+const BASE_URL = "https://grievance-backend-e6gr.onrender.com"; // Live Render Backend URL
 
 const Register = () => {
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
@@ -12,7 +12,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/api/register`, formData);
+      await axios.post(`${BASE_URL}/api/register`, formData);
       navigate("/login");
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
