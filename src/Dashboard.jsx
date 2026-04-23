@@ -1,22 +1,16 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "./api";
 import { useNavigate } from "react-router-dom";
-
-const BASE_URL = "https://grievance-backend-e6gr.onrender.com"; // Live Render Backend URL
 
 const Dashboard = () => {
   const [grievances, setGrievances] = useState([]);
   const [formData, setFormData] = useState({ title: "", description: "", category: "Academic" });
   const [searchTerm, setSearchTerm] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const token = localStorage.getItem("token");
-
-  const axiosConfig = {
-    headers: { Authorization: `Bearer ${token}` }
-  };
 
   useEffect(() => {
     fetchGrievances();
@@ -24,10 +18,14 @@ const Dashboard = () => {
 
   const fetchGrievances = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/grievances`, axiosConfig);
+      setLoading(true);
+      const res = await api.get("/api/grievances");
       setGrievances(res.data);
     } catch (err) {
-      console.error("Failed to fetch", err);
+      console.error("Failed to fetch grievances:", err);
+      // 401 is handled by the api interceptor (auto-redirect to login)
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,33 +33,43 @@ const Dashboard = () => {
     e.preventDefault();
     try {
       if (editingId) {
-        await axios.put(`${BASE_URL}/api/grievances/${editingId}`, formData, axiosConfig);
+        await api.put(`/api/grievances/${editingId}`, formData);
         setEditingId(null);
       } else {
-        await axios.post(`${BASE_URL}/api/grievances`, formData, axiosConfig);
+        await api.post("/api/grievances", formData);
       }
       setFormData({ title: "", description: "", category: "Academic" });
       fetchGrievances();
     } catch (err) {
-      alert("Action failed");
+      console.error("Submit failed:", err);
+      alert(err.response?.data?.message || "Action failed");
     }
   };
 
   const handleSearch = async (e) => {
     const title = e.target.value;
     setSearchTerm(title);
-    if (title.length > 2) {
-      const res = await axios.get(`${BASE_URL}/api/grievances/search?title=${title}`, axiosConfig);
-      setGrievances(res.data);
-    } else if (title.length === 0) {
-      fetchGrievances();
+    try {
+      if (title.length > 2) {
+        const res = await api.get(`/api/grievances/search?title=${encodeURIComponent(title)}`);
+        setGrievances(res.data);
+      } else if (title.length === 0) {
+        fetchGrievances();
+      }
+    } catch (err) {
+      console.error("Search failed:", err);
     }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete this grievance?")) {
-      await axios.delete(`${BASE_URL}/api/grievances/${id}`, axiosConfig);
-      fetchGrievances();
+      try {
+        await api.delete(`/api/grievances/${id}`);
+        fetchGrievances();
+      } catch (err) {
+        console.error("Delete failed:", err);
+        alert(err.response?.data?.message || "Delete failed");
+      }
     }
   };
 
@@ -72,15 +80,25 @@ const Dashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/login");
+  };
+
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case "Pending": return "badge-pending";
+      case "In Progress": return "badge-in-progress";
+      case "Resolved": return "badge-resolved";
+      default: return "";
+    }
   };
 
   return (
     <div className="container animate-fade">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1>Hello, {user.name}</h1>
+          <h1>Hello, {user.name || "User"}</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Manage your grievances efficiently</p>
         </div>
         <button onClick={handleLogout} className="btn-secondary">Logout</button>
@@ -149,7 +167,9 @@ const Dashboard = () => {
           </div>
 
           <div style={{ overflowX: 'auto' }}>
-            {grievances.length === 0 ? (
+            {loading ? (
+              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '2rem' }}>Loading grievances...</p>
+            ) : grievances.length === 0 ? (
               <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '2rem' }}>No grievances found.</p>
             ) : (
               <table>
@@ -170,7 +190,7 @@ const Dashboard = () => {
                       </td>
                       <td>{g.category}</td>
                       <td>
-                        <span className={`badge badge-${g.status.toLowerCase().replace(' ', '-')}`}>
+                        <span className={`badge ${getStatusBadgeClass(g.status)}`}>
                           {g.status}
                         </span>
                       </td>

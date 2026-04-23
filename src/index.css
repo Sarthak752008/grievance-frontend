@@ -151,7 +151,7 @@ th {
 
 .badge-pending { background: #92400e; color: #fef3c7; }
 .badge-resolved { background: #065f46; color: #d1fae5; }
-.badge-progress { background: #1e40af; color: #dbeafe; }
+.badge-in-progress { background: #1e40af; color: #dbeafe; }
 
 /* Animations */
 @keyframes fadeIn {
